@@ -30,6 +30,7 @@ function createFakeRED() {
             getNode(id) { return instances[id]; },
         },
         util: {
+            cloneMessage(msg) { return structuredClone(msg); },
             evaluateNodeProperty(value, type, node, msg) {
                 // Like Node-RED, an empty msg property expression is invalid.
                 if (type === 'msg' && value === '') throw new Error('Invalid property expression: zero-length');
@@ -203,6 +204,8 @@ test('events nodes share one stream per location and filter events', async () =>
     stream.emit('event', { id: 'svc-2', type: 'SENSOR', attributes: { soilHumidity: { value: 40 } } });
 
     assert.equal(all.sentMessages.length, 2);
+    all.sentMessages[0].payload.activity.value = 'CHANGED';
+    assert.equal(oneDevice.sentMessages[0].payload.activity.value, 'OK_CUTTING', 'each node gets its own copy');
     assert.equal(mowers.sentMessages.length, 1);
     assert.equal(oneDevice.sentMessages.length, 1);
     assert.deepEqual(mowers.sentMessages[0], {

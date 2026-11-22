@@ -239,3 +239,34 @@ test('stop() during URL creation does not open a socket', async () => {
     await flush();
     assert.equal(sockets.length, 0);
 });
+
+test('an invalid WebSocket URL schedules a reconnection instead of rejecting', async () => {
+    const { timers, client, options } = createFakes();
+    options.WebSocket = function() { throw new Error('Invalid URL'); };
+    const stream = new GardenaEventStream(client, 'loc-1', options);
+    const waits = [];
+    stream.on('state', (state, details) => { if (state === 'waiting') waits.push(details); });
+    stream.start();
+    await flush();
+    assert.equal(stream.state, 'waiting');
+    assert.match(waits[0].error.message, /Invalid URL/);
+    assert.equal(timers.length, 1);
+    stream.stop();
+});
+
+test('stop() then start() during URL creation opens a single socket', async () => {
+    let resolveFirst;
+    const { sockets, client, options } = createFakes();
+    const original = client.createWebSocketUrlAsync;
+    let calls = 0;
+    client.createWebSocketUrlAsync = () => (++calls === 1 ? new Promise((r) => { resolveFirst = r; }) : original());
+    const stream = new GardenaEventStream(client, 'loc-1', options);
+    stream.start();
+    stream.stop();
+    stream.start();
+    await flush();
+    resolveFirst('wss://stale');
+    await flush();
+    assert.deepEqual(sockets.map((s) => s.url), ['wss://example/1']);
+    stream.stop();
+});

@@ -60,6 +60,7 @@ class GardenaEventStream extends EventEmitter {
         this.lifetimeTimer = null;
         this.failedAttempts = 0;
         this.connectedAt = 0;
+        this.connectAttempt = 0; // Identifies the latest connect() call, to drop stale ones.
         this.resources = new Map(); // "type/id" -> merged resource
     }
 
@@ -70,6 +71,7 @@ class GardenaEventStream extends EventEmitter {
     }
 
     stop() {
+        this.connectAttempt += 1; // A connect() waiting for its URL must not open a socket.
         this.setState('stopped');
         if (this.retryTimer) {
             this.timers.clearTimeout(this.retryTimer);
@@ -99,20 +101,23 @@ class GardenaEventStream extends EventEmitter {
         }
     }
 
+    /** Never rejects: every failure schedules a reconnection. */
     async connect() {
+        const attempt = ++this.connectAttempt;
         this.setState('connecting');
-        let url;
+        let socket;
         try {
-            url = await this.client.createWebSocketUrlAsync(this.locationId);
+            const url = await this.client.createWebSocketUrlAsync(this.locationId);
+            if (attempt !== this.connectAttempt) {
+                return; // Stopped or restarted in the meantime.
+            }
+            socket = new this.WebSocket(url); // Throws on an invalid URL.
         } catch (error) {
-            this.scheduleReconnect(error);
+            if (attempt === this.connectAttempt) {
+                this.scheduleReconnect(error);
+            }
             return;
         }
-        if (this.state === 'stopped') {
-            return;
-        }
-
-        const socket = new this.WebSocket(url);
         let lastError;
         this.socket = socket;
         socket.on('open', () => {

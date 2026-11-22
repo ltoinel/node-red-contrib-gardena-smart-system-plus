@@ -255,3 +255,22 @@ test('rejects a WebSocket creation response without URL', async () => {
     const client = new GardenaApiClient(CREDENTIALS, http);
     await assert.rejects(client.createWebSocketUrlAsync('loc-1'), /did not contain a URL/);
 });
+
+test('concurrent location requests share one API call', async () => {
+    const http = fakeHttp({ requestHandler: () => ({ status: 200, data: { data: [null, { id: 'loc-1', type: 'LOCATION', attributes: { name: 'Home' } }] } }) });
+    const client = new GardenaApiClient(CREDENTIALS, http);
+    const [a, b] = await Promise.all([client.getLocationsAsync(), client.getLocationsAsync()]);
+    assert.deepEqual(a, { 'loc-1': 'Home' });
+    assert.equal(a, b);
+    assert.equal(http.calls.request.length, 1);
+});
+
+test('duration is only sent with the operations that use it, and must be finite', async () => {
+    const http = fakeHttp({ requestHandler: () => ({ status: 202, data: {} }) });
+    const client = new GardenaApiClient(CREDENTIALS, http);
+    await client.sendValveControlAsync('svc', 'STOP_UNTIL_NEXT_TASK', 1);
+    await client.sendPowerSocketControlAsync('svc', 'PAUSE', 30);
+    assert.deepEqual(http.calls.request[0].data.data.attributes, { command: 'STOP_UNTIL_NEXT_TASK' });
+    assert.deepEqual(http.calls.request[1].data.data.attributes, { command: 'PAUSE', seconds: 1800 });
+    await assert.rejects(client.sendValveControlAsync('svc', 'START_SECONDS_TO_OVERRIDE', 'Infinity'), /positive duration/);
+});

@@ -16,6 +16,8 @@ const COMMAND_TYPES = {
 };
 /** The only operation for which the Gardena API requires a duration. */
 const TIMED_OPERATION = 'START_SECONDS_TO_OVERRIDE';
+/** Operations that use the duration: other commands are sent without `seconds`. */
+const OPERATIONS_WITH_DURATION = [TIMED_OPERATION, 'PAUSE'];
 
 /** Error raised for any failure of the Gardena API or of a command's parameters. */
 class GardenaApiError extends Error {
@@ -57,6 +59,7 @@ class GardenaApiClient {
 
         this.locations = null;
         this.locationsFetchedAt = 0;
+        this.pendingLocations = null;
     }
 
     // Authentication
@@ -164,6 +167,16 @@ class GardenaApiClient {
         if (cacheIsFresh) {
             return this.locations;
         }
+        // Concurrent callers (e.g. Events nodes starting together) share the same request.
+        if (!this.pendingLocations) {
+            this.pendingLocations = this.fetchLocationsAsync().finally(() => {
+                this.pendingLocations = null;
+            });
+        }
+        return this.pendingLocations;
+    }
+
+    async fetchLocationsAsync() {
         const response = await this.sendAuthenticatedRequestAsync('get', 'locations');
         this.locations = parseLocations(response.data && response.data.data);
         this.locationsFetchedAt = Date.now();
@@ -257,10 +270,11 @@ class GardenaApiClient {
 
         const attributes = { command: operation };
         const minutes = Number(durationMinutes);
-        if (operation === TIMED_OPERATION && !(minutes > 0)) {
+        const validDuration = Number.isFinite(minutes) && minutes > 0;
+        if (operation === TIMED_OPERATION && !validDuration) {
             throw new GardenaApiError(`A positive duration in minutes is required for ${operation}, got "${durationMinutes}".`);
         }
-        if (minutes > 0) {
+        if (validDuration && OPERATIONS_WITH_DURATION.includes(operation)) {
             // The API only accepts whole minutes, expressed in seconds.
             attributes.seconds = Math.max(1, Math.round(minutes)) * 60;
         }
@@ -309,7 +323,7 @@ function parseLocations(locationsFromGardenaApi) {
     }
     const locations = {};
     for (const location of locationsFromGardenaApi) {
-        if (location.type === 'LOCATION' && location.id) {
+        if (location && location.type === 'LOCATION' && location.id) {
             locations[location.id] = (location.attributes && location.attributes.name) || 'Unknown location';
         }
     }

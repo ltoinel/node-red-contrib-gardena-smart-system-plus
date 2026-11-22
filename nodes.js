@@ -305,7 +305,8 @@ module.exports = function(RED) {
             const stream = credentialsNode.acquireEventStream(locationId);
             const onEvent = function(resource, changes) {
                 if (matchesFilter(config, resource)) {
-                    node.send(eventToMessage(resource, changes));
+                    // Each node gets its own copy: the event is shared by all the Events nodes.
+                    node.send(RED.util.cloneMessage(eventToMessage(resource, changes)));
                 }
             };
             const onState = function(state, details) {

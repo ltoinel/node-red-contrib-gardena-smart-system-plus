@@ -82,7 +82,17 @@ The source code of the Gardena smart Gateway firmware is published by Husqvarna:
 
 ### Setup
 
-When using one of the actions on the node, you'll need credentials. These should be easy to setup, pass in the app client ID and secret.
+All the nodes (except Service Status) use a **Gardena Access** configuration node: enter the *Application Key* and *Application Secret* of your application from the developer portal. They are stored as Node-RED credentials (encrypted, never exported with the flows).
+
+### Examples
+
+Three example flows are installed with the package. In Node-RED, open *Menu > Import > Examples > node-red-contrib-gardena-smart-system-plus*:
+
+* **Devices status**: lists the devices and services of the account, to find the service IDs.
+* **Realtime events**: shows every event, and reacts only when the mower activity changes.
+* **Control devices**: one example per command (watering, closing all valves, mowing, parking, power socket), with a duration set in the node or read from `msg.duration`, and a `catch` node for errors.
+
+After importing, set your credentials in the *Gardena Access* node and the service IDs in the control nodes.
 
 ### Service IDs
 
@@ -95,8 +105,34 @@ Sadly, the services aren't really labeled, so you'll need to try out which is wh
 The **Gardena Events** node outputs a message as soon as a device changes (mower activity, valve opened or closed, sensor values, battery, radio link...). The events are pushed by the Gardena API through a WebSocket, which uses almost none of the API quota: prefer it to polling the Devices Status node.
 
 * Right after connecting, the current state of every device and service is sent.
-* Events can be filtered by type (`MOWER`, `VALVE`, `SENSOR`...) and by service or device ID.
-* The API sends partial updates: they are merged, so `msg.payload` is always the complete state of the service, with the same shape as in the Devices Status output. `msg.changed` lists the attributes present in the update (e.g. `["activity"]`), `msg.topic` is `gardena/<type>/<id>` and `msg.deviceId` is the ID of the device.
+* The node has no input. Its settings are all optional:
+
+  | Setting | Effect |
+  |---------|--------|
+  | Event Type | Only output one type: `MOWER`, `VALVE`, `VALVE_SET` (irrigation control), `POWER_SOCKET`, `SENSOR`, `COMMON` (device information: battery, radio link...), `DEVICE` or `LOCATION`. All by default. |
+  | Service / Device ID | Only output the events of this service, or of all the services of this device. |
+  | Location ID | Only listen to this location. All the locations of the account by default. |
+
+* The API sends partial updates: they are merged, so `msg.payload` is always the complete state of the service (as received since the connection opened), with the same shape as in the Devices Status output. `msg.changed` lists the attributes present in the update, so a flow can react to a specific change, e.g. with a `switch` node on `msg.changed` containing `activity`.
+* The node status shows the connection: *Listening*, *Connecting* or *Disconnected, retry in ...*.
+
+Example of message, when a mower starts cutting:
+
+```json
+{
+  "topic": "gardena/MOWER/a1b2c3d4-...:mower",
+  "eventType": "MOWER",
+  "deviceId": "a1b2c3d4-...",
+  "changed": ["activity"],
+  "payload": {
+    "id": "a1b2c3d4-...:mower",
+    "type": "MOWER",
+    "state": { "value": "OK", "timestamp": "2026-06-01T08:00:00.000+00:00" },
+    "activity": { "value": "OK_CUTTING", "timestamp": "2026-06-01T08:00:05.000+00:00" },
+    "operatingHours": { "value": 120 }
+  }
+}
+```
 * All the Events nodes using the same credentials share one connection per location. The connection is kept alive with a ping every 150 seconds and renewed every 110 minutes (the API closes connections after 2 hours); lost connections are re-established automatically: quickly at first, then once per hour, to stay within the quota.
 
 
@@ -106,7 +142,7 @@ The **Gardena Events** node outputs a message as soon as a device changes (mower
 * Errors are reported through the standard Node-RED mechanism and can be handled with a `catch` node.
 * Requires Node.js 18+ and Node-RED 3+.
 * I wasn't able to test on many things, so basically the old saying "it works on my machine" applies. If something does not work, let me know.
-* Gardena has rate limits, see [here](https://developer.husqvarnagroup.cloud/apis/gardena-smart-system-api?tab=readme#rate-limits) - keep those in mind! Do NOT setup too frequent calls to the API. For ongoing status requests, try to stick to something below one request every 30 minutes.
+* Gardena has [rate limits](https://developer.husqvarnagroup.cloud/apis/gardena-smart-system-api?tab=readme#rate-limits), shared by all the nodes of an application: **700 requests per week** (about one every 15 minutes on average) and **10 requests per 10 seconds**. Beyond, the API answers `429 Too Many Requests` until the quota is restored. Every Devices Status request and every command counts; to follow the state of the devices, use the Gardena Events node instead of polling.
 
 ## Migrating from 1.x or from the original package
 
@@ -135,6 +171,14 @@ sed -i -E 's/"type":"gardena-plus-([a-z]+)_([a-z]+)"/"type":"gardena-plus-\1-\2"
 The node IDs do not change, so the credentials (stored in `flows_cred.json`) and the wires are kept. Alternatively, export your flows, replace the types in the JSON with a text editor and import them again.
 
 ## Changelog
+
+### 2.0.1
+
+* Fixed: an invalid WebSocket URL returned by the API could cause an unhandled promise rejection; it now triggers a reconnection.
+* Each Events node now outputs its own copy of the event: a flow modifying `msg.payload` no longer affects the other Events nodes.
+* Events nodes starting together share a single locations request (saves API quota on each deploy).
+* The duration is only sent with the operations that use it (`START_SECONDS_TO_OVERRIDE`, `PAUSE`), and must be a finite number.
+* README: setup, examples, Events node settings and sample message, official rate limits.
 
 ### 2.0.0
 
@@ -167,4 +211,4 @@ npm version patch   # or minor / major: updates package.json and creates the v* 
 git push --follow-tags
 ```
 
-The `Release` workflow checks that the tag matches `package.json`, runs the tests, publishes to npm with provenance and creates the GitHub release.
+The `Release` workflow checks that the tag matches `package.json`, runs the tests, publishes to npm with provenance (npm trusted publishing, no token needed) and creates the GitHub release. If the version was already published by hand, the npm step is skipped.
