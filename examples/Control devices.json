@@ -1,0 +1,319 @@
+[
+    {
+        "id": "ex3",
+        "type": "tab",
+        "label": "Gardena - Control devices",
+        "info": "Sends commands to valves, irrigation controls, mowers and power sockets.\n\nSet the service ID of each control node (use the Devices status example to find them). Errors (e.g. rate limit) can be handled with the catch node. Durations are in minutes."
+    },
+    {
+        "id": "ex3-i1",
+        "type": "inject",
+        "z": "ex3",
+        "name": "Water 10 min",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 60,
+        "wires": [
+            [
+                "ex3-valve"
+            ]
+        ]
+    },
+    {
+        "id": "ex3-i2",
+        "type": "inject",
+        "z": "ex3",
+        "name": "Water for msg.duration",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "duration",
+                "v": "5",
+                "vt": "num"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 120,
+        "wires": [
+            [
+                "ex3-valve-msg"
+            ]
+        ]
+    },
+    {
+        "id": "ex3-i3",
+        "type": "inject",
+        "z": "ex3",
+        "name": "Close all valves",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 180,
+        "wires": [
+            [
+                "ex3-valveset"
+            ]
+        ]
+    },
+    {
+        "id": "ex3-i4",
+        "type": "inject",
+        "z": "ex3",
+        "name": "Mow 60 min",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 240,
+        "wires": [
+            [
+                "ex3-mower"
+            ]
+        ]
+    },
+    {
+        "id": "ex3-i5",
+        "type": "inject",
+        "z": "ex3",
+        "name": "Park mower",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 300,
+        "wires": [
+            [
+                "ex3-park"
+            ]
+        ]
+    },
+    {
+        "id": "ex3-i6",
+        "type": "inject",
+        "z": "ex3",
+        "name": "Socket on 30 min",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 360,
+        "wires": [
+            [
+                "ex3-socket"
+            ]
+        ]
+    },
+    {
+        "id": "ex3-valve",
+        "type": "valve_control",
+        "z": "ex3",
+        "name": "Valve",
+        "api": "ex-creds",
+        "service": "",
+        "operation": "START_SECONDS_TO_OVERRIDE",
+        "x": 440,
+        "y": 60,
+        "wires": [
+            [
+                "ex3-debug"
+            ]
+        ],
+        "duration": 10,
+        "durationtype": "num"
+    },
+    {
+        "id": "ex3-valve-msg",
+        "type": "valve_control",
+        "z": "ex3",
+        "name": "Valve (duration from msg)",
+        "api": "ex-creds",
+        "service": "",
+        "operation": "START_SECONDS_TO_OVERRIDE",
+        "x": 440,
+        "y": 120,
+        "wires": [
+            [
+                "ex3-debug"
+            ]
+        ],
+        "duration": "duration",
+        "durationtype": "msg"
+    },
+    {
+        "id": "ex3-valveset",
+        "type": "valveset_control",
+        "z": "ex3",
+        "name": "Irrigation control",
+        "api": "ex-creds",
+        "service": "",
+        "operation": "STOP_UNTIL_NEXT_TASK",
+        "x": 440,
+        "y": 180,
+        "wires": [
+            [
+                "ex3-debug"
+            ]
+        ]
+    },
+    {
+        "id": "ex3-mower",
+        "type": "mower_control",
+        "z": "ex3",
+        "name": "Mower",
+        "api": "ex-creds",
+        "service": "",
+        "operation": "START_SECONDS_TO_OVERRIDE",
+        "x": 440,
+        "y": 240,
+        "wires": [
+            [
+                "ex3-debug"
+            ]
+        ],
+        "duration": 60,
+        "durationtype": "num"
+    },
+    {
+        "id": "ex3-park",
+        "type": "mower_control",
+        "z": "ex3",
+        "name": "Mower",
+        "api": "ex-creds",
+        "service": "",
+        "operation": "PARK_UNTIL_NEXT_TASK",
+        "x": 440,
+        "y": 300,
+        "wires": [
+            [
+                "ex3-debug"
+            ]
+        ],
+        "duration": 1,
+        "durationtype": "num"
+    },
+    {
+        "id": "ex3-socket",
+        "type": "powersocket_control",
+        "z": "ex3",
+        "name": "Power socket",
+        "api": "ex-creds",
+        "service": "",
+        "operation": "START_SECONDS_TO_OVERRIDE",
+        "x": 440,
+        "y": 360,
+        "wires": [
+            [
+                "ex3-debug"
+            ]
+        ],
+        "duration": 30,
+        "durationtype": "num"
+    },
+    {
+        "id": "ex3-debug",
+        "type": "debug",
+        "z": "ex3",
+        "name": "Command result",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "targetType": "msg",
+        "x": 720,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "ex3-catch",
+        "type": "catch",
+        "z": "ex3",
+        "name": "",
+        "scope": null,
+        "uncaught": false,
+        "x": 440,
+        "y": 440,
+        "wires": [
+            [
+                "ex3-debug-err"
+            ]
+        ]
+    },
+    {
+        "id": "ex3-debug-err",
+        "type": "debug",
+        "z": "ex3",
+        "name": "Errors",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 720,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "ex-creds",
+        "type": "api-credentials",
+        "name": "Gardena Access"
+    }
+]

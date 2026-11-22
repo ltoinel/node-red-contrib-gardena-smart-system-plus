@@ -1,0 +1,97 @@
+[
+    {
+        "id": "ex1",
+        "type": "tab",
+        "label": "Gardena - Devices status",
+        "info": "Lists all the devices and services of the account, then extracts one service.\n\nSet your application key and secret in the **Gardena Access** config node, deploy, click the inject node and look for the service IDs in the debug sidebar. Then set the ID of a mower service in the Service Status node."
+    },
+    {
+        "id": "ex1-inject",
+        "type": "inject",
+        "z": "ex1",
+        "name": "Get status (max every 30 min)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 100,
+        "wires": [
+            [
+                "ex1-status"
+            ]
+        ]
+    },
+    {
+        "id": "ex1-status",
+        "type": "devices_status",
+        "z": "ex1",
+        "api": "ex-creds",
+        "x": 400,
+        "y": 100,
+        "wires": [
+            [
+                "ex1-debug",
+                "ex1-service"
+            ]
+        ]
+    },
+    {
+        "id": "ex1-debug",
+        "type": "debug",
+        "z": "ex1",
+        "name": "All locations, devices and services",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "targetType": "msg",
+        "x": 650,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "ex1-service",
+        "type": "service_status",
+        "z": "ex1",
+        "name": "My mower",
+        "service": "",
+        "servicetype": "MOWER",
+        "x": 630,
+        "y": 140,
+        "wires": [
+            [
+                "ex1-debug2"
+            ]
+        ]
+    },
+    {
+        "id": "ex1-debug2",
+        "type": "debug",
+        "z": "ex1",
+        "name": "Mower service",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "targetType": "msg",
+        "x": 860,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "ex-creds",
+        "type": "api-credentials",
+        "name": "Gardena Access"
+    }
+]

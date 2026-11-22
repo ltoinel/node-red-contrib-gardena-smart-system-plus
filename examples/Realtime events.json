@@ -1,0 +1,129 @@
+[
+    {
+        "id": "ex2",
+        "type": "tab",
+        "label": "Gardena - Realtime events",
+        "info": "Receives the state changes of all the devices in realtime, without polling (almost no API quota used).\n\nThe first output shows every event. The second branch only keeps the mower events where the activity changed, e.g. to send a notification when the mower starts or parks."
+    },
+    {
+        "id": "ex2-all",
+        "type": "gardena_events",
+        "z": "ex2",
+        "name": "All events",
+        "api": "ex-creds",
+        "location": "",
+        "eventtype": "",
+        "filterid": "",
+        "x": 140,
+        "y": 80,
+        "wires": [
+            [
+                "ex2-debug"
+            ]
+        ]
+    },
+    {
+        "id": "ex2-debug",
+        "type": "debug",
+        "z": "ex2",
+        "name": "Event (full message)",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 380,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "ex2-mower",
+        "type": "gardena_events",
+        "z": "ex2",
+        "name": "Mower events",
+        "api": "ex-creds",
+        "location": "",
+        "eventtype": "MOWER",
+        "filterid": "",
+        "x": 150,
+        "y": 180,
+        "wires": [
+            [
+                "ex2-switch"
+            ]
+        ]
+    },
+    {
+        "id": "ex2-switch",
+        "type": "switch",
+        "z": "ex2",
+        "name": "Activity changed?",
+        "property": "changed",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "activity",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 370,
+        "y": 180,
+        "wires": [
+            [
+                "ex2-change"
+            ]
+        ]
+    },
+    {
+        "id": "ex2-change",
+        "type": "change",
+        "z": "ex2",
+        "name": "payload = activity",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.activity.value",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 590,
+        "y": 180,
+        "wires": [
+            [
+                "ex2-debug2"
+            ]
+        ]
+    },
+    {
+        "id": "ex2-debug2",
+        "type": "debug",
+        "z": "ex2",
+        "name": "Mower activity",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "targetType": "msg",
+        "x": 800,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "ex-creds",
+        "type": "api-credentials",
+        "name": "Gardena Access"
+    }
+]

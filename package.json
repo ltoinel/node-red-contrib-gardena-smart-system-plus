@@ -16,7 +16,8 @@
 		"nodes.js",
 		"nodes.html",
 		"client/",
-		"icons/"
+		"icons/",
+		"examples/"
 	],
 	"scripts": {
 		"test": "node --test",
