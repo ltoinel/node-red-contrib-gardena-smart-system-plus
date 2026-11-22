@@ -53,7 +53,7 @@ module.exports = function(RED) {
             streams.clear();
         });
     }
-    RED.nodes.registerType('api-credentials', ApiCredentialsNode, {
+    RED.nodes.registerType('gardena-plus-credentials', ApiCredentialsNode, {
         credentials: {
             application: { type: 'text' },
             password: { type: 'password' }
@@ -177,7 +177,7 @@ module.exports = function(RED) {
             );
         });
     }
-    RED.nodes.registerType('devices_status', GardenaDevicesStatusNode);
+    RED.nodes.registerType('gardena-plus-devices-status', GardenaDevicesStatusNode);
 
     // Service status: extracts one service from the Devices Status output, without calling the API.
 
@@ -200,7 +200,7 @@ module.exports = function(RED) {
             done();
         });
     }
-    RED.nodes.registerType('service_status', GardenaServiceStatusNode);
+    RED.nodes.registerType('gardena-plus-service-status', GardenaServiceStatusNode);
 
     // Control nodes: send the configured command to a valve, mower or power socket.
 
@@ -240,10 +240,10 @@ module.exports = function(RED) {
         RED.nodes.registerType(typeName, GardenaControlNode);
     }
 
-    registerControlNode('valve_control', 'sendValveControlAsync', 'valve');
-    registerControlNode('valveset_control', 'sendValveSetControlAsync', 'valve set');
-    registerControlNode('mower_control', 'sendMowerControlAsync', 'mower');
-    registerControlNode('powersocket_control', 'sendPowerSocketControlAsync', 'power socket');
+    registerControlNode('gardena-plus-valve-control', 'sendValveControlAsync', 'valve');
+    registerControlNode('gardena-plus-valveset-control', 'sendValveSetControlAsync', 'valve set');
+    registerControlNode('gardena-plus-mower-control', 'sendMowerControlAsync', 'mower');
+    registerControlNode('gardena-plus-powersocket-control', 'sendPowerSocketControlAsync', 'power socket');
 
     // Events: outputs realtime state changes received through the Gardena WebSocket.
 
@@ -346,5 +346,5 @@ module.exports = function(RED) {
             subscriptions.length = 0;
         });
     }
-    RED.nodes.registerType('gardena_events', GardenaEventsNode);
+    RED.nodes.registerType('gardena-plus-events', GardenaEventsNode);
 };

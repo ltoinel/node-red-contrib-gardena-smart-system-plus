@@ -7,7 +7,7 @@
     },
     {
         "id": "ex2-all",
-        "type": "gardena_events",
+        "type": "gardena-plus-events",
         "z": "ex2",
         "name": "All events",
         "api": "ex-creds",
@@ -39,7 +39,7 @@
     },
     {
         "id": "ex2-mower",
-        "type": "gardena_events",
+        "type": "gardena-plus-events",
         "z": "ex2",
         "name": "Mower events",
         "api": "ex-creds",
@@ -123,7 +123,7 @@
     },
     {
         "id": "ex-creds",
-        "type": "api-credentials",
+        "type": "gardena-plus-credentials",
         "name": "Gardena Access"
     }
 ]

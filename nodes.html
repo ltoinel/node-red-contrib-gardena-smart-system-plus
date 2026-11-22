@@ -1,5 +1,5 @@
 <script type="text/javascript">
-    RED.nodes.registerType('api-credentials', {
+    RED.nodes.registerType('gardena-plus-credentials', {
         category: 'config',
         credentials: {
             application: { type: 'text' },
@@ -15,7 +15,7 @@
     });
 </script>
 
-<script type="text/html" data-template-name="api-credentials">
+<script type="text/html" data-template-name="gardena-plus-credentials">
     <div class="form-row">
         <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-config-input-name">
@@ -31,11 +31,11 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('devices_status', {
+    RED.nodes.registerType('gardena-plus-devices-status', {
         category: 'Gardena',
         color: '#C0DEED',
         defaults: {
-            api: { value: '', type: 'api-credentials', required: true },
+            api: { value: '', type: 'gardena-plus-credentials', required: true },
         },
         inputs:1,
         outputs:1,
@@ -46,14 +46,14 @@
     });
 </script>
 
-<script type="text/html" data-template-name="devices_status">
+<script type="text/html" data-template-name="gardena-plus-devices-status">
     <div class="form-row">
         <label for="node-input-api"><i class="fa fa-tag"></i> API Credentials</label>
         <input type="text" id="node-input-api">
     </div>
 </script>
 
-<script type="text/html" data-help-name="devices_status">
+<script type="text/html" data-help-name="gardena-plus-devices-status">
     <p>Retrieves the status of all devices, for every location of the Gardena Smart System account.</p>
     <h3>Outputs</h3>
     <dl class="message-properties">
@@ -64,7 +64,7 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('service_status', {
+    RED.nodes.registerType('gardena-plus-service-status', {
         category: 'Gardena',
         color: '#C0DEED',
         defaults: {
@@ -84,7 +84,7 @@
     });
 </script>
 
-<script type="text/html" data-template-name="service_status">
+<script type="text/html" data-template-name="gardena-plus-service-status">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Node Name</label>
         <input type="text" id="node-input-name">
@@ -106,7 +106,7 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="service_status">
+<script type="text/html" data-help-name="gardena-plus-service-status">
     <p>Extracts the status of one service from the output of the Gardena Devices Status node.</p>
     <h3>Outputs</h3>
     <dl class="message-properties">
@@ -116,12 +116,12 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('valve_control', {
+    RED.nodes.registerType('gardena-plus-valve-control', {
         category: 'Gardena',
         color: '#FFAAAA',
         defaults: {
             name: { value: null },
-            api: { value: '', type: 'api-credentials', required: true },
+            api: { value: '', type: 'gardena-plus-credentials', required: true },
             service: { value: '', required: true },
             operation: { value: '', required: true },
             duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
@@ -142,7 +142,7 @@
     });
 </script>
 
-<script type="text/html" data-template-name="valve_control">
+<script type="text/html" data-template-name="gardena-plus-valve-control">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Node Name</label>
         <input type="text" id="node-input-name">
@@ -171,7 +171,7 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="valve_control">
+<script type="text/html" data-help-name="gardena-plus-valve-control">
     <p>A node for controlling a Gardena Valve.</p>
     <h3>Inputs</h3>
     <dl class="message-properties">
@@ -187,12 +187,12 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('mower_control', {
+    RED.nodes.registerType('gardena-plus-mower-control', {
         category: 'Gardena',
         color: '#FFAAAA',
         defaults: {
             name: { value: null },
-            api: { value: '', type: 'api-credentials', required: true },
+            api: { value: '', type: 'gardena-plus-credentials', required: true },
             service: { value: '', required: true },
             operation: { value: '', required: true },
             duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
@@ -213,7 +213,7 @@
     });
 </script>
 
-<script type="text/html" data-template-name="mower_control">
+<script type="text/html" data-template-name="gardena-plus-mower-control">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Node Name</label>
         <input type="text" id="node-input-name">
@@ -242,7 +242,7 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="mower_control">
+<script type="text/html" data-help-name="gardena-plus-mower-control">
     <p>A node for controlling a Gardena Mower.</p>
     <h3>Inputs</h3>
     <dl class="message-properties">
@@ -258,12 +258,12 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('powersocket_control', {
+    RED.nodes.registerType('gardena-plus-powersocket-control', {
         category: 'Gardena',
         color: '#FFAAAA',
         defaults: {
             name: { value: null },
-            api: { value: '', type: 'api-credentials', required: true },
+            api: { value: '', type: 'gardena-plus-credentials', required: true },
             service: { value: '', required: true },
             operation: { value: '', required: true },
             duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
@@ -284,7 +284,7 @@
     });
 </script>
 
-<script type="text/html" data-template-name="powersocket_control">
+<script type="text/html" data-template-name="gardena-plus-powersocket-control">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Node Name</label>
         <input type="text" id="node-input-name">
@@ -314,7 +314,7 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="powersocket_control">
+<script type="text/html" data-help-name="gardena-plus-powersocket-control">
     <p>A node for controlling a Gardena Power Socket.</p>
     <h3>Inputs</h3>
     <dl class="message-properties">
@@ -330,12 +330,12 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('valveset_control', {
+    RED.nodes.registerType('gardena-plus-valveset-control', {
         category: 'Gardena',
         color: '#FFAAAA',
         defaults: {
             name: { value: null },
-            api: { value: '', type: 'api-credentials', required: true },
+            api: { value: '', type: 'gardena-plus-credentials', required: true },
             service: { value: '', required: true },
             operation: { value: 'STOP_UNTIL_NEXT_TASK', required: true },
         },
@@ -348,7 +348,7 @@
     });
 </script>
 
-<script type="text/html" data-template-name="valveset_control">
+<script type="text/html" data-template-name="gardena-plus-valveset-control">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Node Name</label>
         <input type="text" id="node-input-name">
@@ -369,7 +369,7 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="valveset_control">
+<script type="text/html" data-help-name="gardena-plus-valveset-control">
     <p>Immediately closes all the valves of a Gardena irrigation control, then continues with the schedule.</p>
     <p>Use the ID of the <code>VALVE_SET</code> service, listed by the Gardena Devices Status node.</p>
     <h3>Inputs</h3>
@@ -385,12 +385,12 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('gardena_events', {
+    RED.nodes.registerType('gardena-plus-events', {
         category: 'Gardena',
         color: '#C0DEED',
         defaults: {
             name: { value: null },
-            api: { value: '', type: 'api-credentials', required: true },
+            api: { value: '', type: 'gardena-plus-credentials', required: true },
             location: { value: '' },
             eventtype: { value: '' },
             filterid: { value: '' },
@@ -404,7 +404,7 @@
     });
 </script>
 
-<script type="text/html" data-template-name="gardena_events">
+<script type="text/html" data-template-name="gardena-plus-events">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Node Name</label>
         <input type="text" id="node-input-name">
@@ -437,7 +437,7 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="gardena_events">
+<script type="text/html" data-help-name="gardena-plus-events">
     <p>Outputs the state changes of the Gardena devices in realtime, as soon as they happen (mower activity,
     valve opened or closed, sensor values, battery, radio link...).</p>
     <p>Prefer this node to polling the Gardena Devices Status node: the events are pushed by the Gardena API

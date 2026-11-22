@@ -55,7 +55,7 @@ function sendInput(node, msg) {
 
 test('control nodes report missing credentials through done()', async () => {
     const runtime = createFakeRED();
-    const node = runtime.create('valve_control', { id: 'n1', api: 'missing', service: 's', operation: 'PAUSE', duration: 1, durationtype: 'num' });
+    const node = runtime.create('gardena-plus-valve-control', { id: 'n1', api: 'missing', service: 's', operation: 'PAUSE', duration: 1, durationtype: 'num' });
     const { sent, err } = await sendInput(node, { payload: 1 });
     assert.equal(sent.length, 0);
     assert.match(err.message, /Credentials/);
@@ -64,12 +64,12 @@ test('control nodes report missing credentials through done()', async () => {
 
 test('control node reads duration from msg and sends command', async () => {
     const runtime = createFakeRED();
-    const creds = runtime.create('api-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
+    const creds = runtime.create('gardena-plus-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
     const calls = [];
     creds.client.getLoginStatusAsync = async () => true;
     creds.client.sendMowerControlAsync = async (...args) => { calls.push(args); return { status: 202, data: {} }; };
 
-    const node = runtime.create('mower_control', {
+    const node = runtime.create('gardena-plus-mower-control', {
         id: 'n2', api: 'c1', service: 'svc', operation: 'START_SECONDS_TO_OVERRIDE', duration: 'payload.minutes', durationtype: 'msg',
     });
     const { sent, err } = await sendInput(node, { payload: { minutes: 42 } });
@@ -80,10 +80,10 @@ test('control node reads duration from msg and sends command', async () => {
 
 test('control node surfaces API errors through done()', async () => {
     const runtime = createFakeRED();
-    const creds = runtime.create('api-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
+    const creds = runtime.create('gardena-plus-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
     creds.client.getLoginStatusAsync = async () => true;
     creds.client.sendValveControlAsync = async () => { throw new Error('boom'); };
-    const node = runtime.create('valve_control', { id: 'n3', api: 'c1', service: 's', operation: 'PAUSE', duration: 1, durationtype: 'num' });
+    const node = runtime.create('gardena-plus-valve-control', { id: 'n3', api: 'c1', service: 's', operation: 'PAUSE', duration: 1, durationtype: 'num' });
     const { sent, err } = await sendInput(node, {});
     assert.equal(sent.length, 0);
     assert.match(err.message, /controlling valve: boom/);
@@ -91,7 +91,7 @@ test('control node surfaces API errors through done()', async () => {
 
 test('service status finds the matching service', async () => {
     const runtime = createFakeRED();
-    const node = runtime.create('service_status', { id: 'n4', service: 'svc-2', servicetype: 'VALVE' });
+    const node = runtime.create('gardena-plus-service-status', { id: 'n4', service: 'svc-2', servicetype: 'VALVE' });
     const payload = [
         { devices: [{ services: [{ id: 'svc-1', type: 'VALVE' }] }] },
         { devices: [{ services: [{ id: 'svc-2', type: 'MOWER' }, { id: 'svc-2', type: 'VALVE', state: 'OK' }] }] },
@@ -103,21 +103,21 @@ test('service status finds the matching service', async () => {
 
 test('service status errors on unexpected input or missing service', async () => {
     const runtime = createFakeRED();
-    const node = runtime.create('service_status', { id: 'n5', service: 'x', servicetype: 'VALVE' });
+    const node = runtime.create('gardena-plus-service-status', { id: 'n5', service: 'x', servicetype: 'VALVE' });
     assert.match((await sendInput(node, { payload: 'nope' })).err.message, /Devices Status/);
     assert.match((await sendInput(node, { payload: [{ devices: [] }] })).err.message, /Could not find service/);
 });
 
 test('devices status node outputs locations and reports errors', async () => {
     const runtime = createFakeRED();
-    const creds = runtime.create('api-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
+    const creds = runtime.create('gardena-plus-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
     creds.client.getLoginStatusAsync = async () => false;
     let fail = false;
     creds.client.getAllDevicesStatusAsync = async () => {
         if (fail) throw new Error('down');
         return [{ id: 'loc' }];
     };
-    const node = runtime.create('devices_status', { id: 'n6', api: 'c1' });
+    const node = runtime.create('gardena-plus-devices-status', { id: 'n6', api: 'c1' });
     await new Promise((r) => setImmediate(r));
     assert.equal(node.statuses.at(-1).text, 'Could not connect');
 
@@ -134,16 +134,16 @@ test('devices status node outputs locations and reports errors', async () => {
 
 test('devices status node without credentials reports through done()', async () => {
     const runtime = createFakeRED();
-    const node = runtime.create('devices_status', { id: 'n7', api: 'none' });
+    const node = runtime.create('gardena-plus-devices-status', { id: 'n7', api: 'none' });
     assert.match((await sendInput(node, {})).err.message, /Credentials/);
 });
 
 test('done() is called exactly once with the error if send() throws', async () => {
     const runtime = createFakeRED();
-    const creds = runtime.create('api-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
+    const creds = runtime.create('gardena-plus-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
     creds.client.getLoginStatusAsync = async () => true;
     creds.client.sendValveControlAsync = async () => ({ status: 202, data: {} });
-    const node = runtime.create('valve_control', { id: 'n8', api: 'c1', service: 's', operation: 'PAUSE', duration: 1, durationtype: 'num' });
+    const node = runtime.create('gardena-plus-valve-control', { id: 'n8', api: 'c1', service: 's', operation: 'PAUSE', duration: 1, durationtype: 'num' });
     const doneArgs = [];
     node.emit('input', {}, () => { throw new Error('downstream'); }, (err) => doneArgs.push(err));
     await new Promise((r) => setTimeout(r, 20));
@@ -153,7 +153,7 @@ test('done() is called exactly once with the error if send() throws', async () =
 
 test('service status ignores null devices and services', async () => {
     const runtime = createFakeRED();
-    const node = runtime.create('service_status', { id: 'n9', service: 's', servicetype: 'VALVE' });
+    const node = runtime.create('gardena-plus-service-status', { id: 'n9', service: 's', servicetype: 'VALVE' });
     const payload = [null, { devices: [null, { services: [null, { id: 's', type: 'VALVE' }] }] }];
     const { sent, err } = await sendInput(node, { payload });
     assert.equal(err, undefined);
@@ -162,10 +162,10 @@ test('service status ignores null devices and services', async () => {
 
 test('invalid msg duration expression is reported without calling the API', async () => {
     const runtime = createFakeRED();
-    const creds = runtime.create('api-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
+    const creds = runtime.create('gardena-plus-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
     creds.client.getLoginStatusAsync = async () => true;
     creds.client.sendMowerControlAsync = async () => assert.fail('should not be called');
-    const node = runtime.create('mower_control', { id: 'n10', api: 'c1', service: 's', operation: 'PAUSE', duration: '', durationtype: 'msg' });
+    const node = runtime.create('gardena-plus-mower-control', { id: 'n10', api: 'c1', service: 's', operation: 'PAUSE', duration: '', durationtype: 'msg' });
     const { sent, err } = await sendInput(node, {});
     assert.equal(sent.length, 0);
     assert.match(err.message, /zero-length/);
@@ -175,7 +175,7 @@ test('invalid msg duration expression is reported without calling the API', asyn
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 
 function createCredentials(runtime) {
-    const creds = runtime.create('api-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
+    const creds = runtime.create('gardena-plus-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
     creds.client.getLoginStatusAsync = async () => true;
     creds.client.getLocationsAsync = async () => ({ 'loc-1': 'Home' });
     // Keep the streams in "connecting" state: no network in unit tests.
@@ -186,9 +186,9 @@ function createCredentials(runtime) {
 test('events nodes share one stream per location and filter events', async () => {
     const runtime = createFakeRED();
     const creds = createCredentials(runtime);
-    const all = runtime.create('gardena_events', { id: 'e1', api: 'c1', eventtype: '', filterid: '' });
-    const mowers = runtime.create('gardena_events', { id: 'e2', api: 'c1', eventtype: 'MOWER', filterid: '' });
-    const oneDevice = runtime.create('gardena_events', { id: 'e3', api: 'c1', eventtype: '', filterid: 'dev-1' });
+    const all = runtime.create('gardena-plus-events', { id: 'e1', api: 'c1', eventtype: '', filterid: '' });
+    const mowers = runtime.create('gardena-plus-events', { id: 'e2', api: 'c1', eventtype: 'MOWER', filterid: '' });
+    const oneDevice = runtime.create('gardena-plus-events', { id: 'e3', api: 'c1', eventtype: '', filterid: 'dev-1' });
     await flush();
 
     const stream = creds.acquireEventStream('loc-1');
@@ -231,13 +231,13 @@ test('events node uses the configured location and reports location errors', asy
     const original = creds.acquireEventStream;
     creds.acquireEventStream = (id) => { acquired.push(id); return original(id); };
 
-    const node = runtime.create('gardena_events', { id: 'e4', api: 'c1', location: 'loc-9' });
+    const node = runtime.create('gardena-plus-events', { id: 'e4', api: 'c1', location: 'loc-9' });
     await flush();
     assert.deepEqual(acquired, ['loc-9']);
     node.emit('close');
 
     creds.client.getLocationsAsync = async () => { throw new Error('quota'); };
-    const failing = runtime.create('gardena_events', { id: 'e5', api: 'c1' });
+    const failing = runtime.create('gardena-plus-events', { id: 'e5', api: 'c1' });
     await flush();
     assert.equal(failing.statuses.at(-1).text, 'Error getting locations');
     assert.match(failing.errors[0], /quota/);
@@ -246,7 +246,7 @@ test('events node uses the configured location and reports location errors', asy
 test('events node closed before locations are known does not subscribe', async () => {
     const runtime = createFakeRED();
     const creds = createCredentials(runtime);
-    const node = runtime.create('gardena_events', { id: 'e6', api: 'c1' });
+    const node = runtime.create('gardena-plus-events', { id: 'e6', api: 'c1' });
     node.emit('close');
     await flush();
     const stream = creds.acquireEventStream('loc-1');
@@ -257,7 +257,7 @@ test('events node closed before locations are known does not subscribe', async (
 
 test('events node without credentials shows it', () => {
     const runtime = createFakeRED();
-    const node = runtime.create('gardena_events', { id: 'e7', api: 'none' });
+    const node = runtime.create('gardena-plus-events', { id: 'e7', api: 'none' });
     assert.equal(node.statuses.at(-1).text, 'Credentials missing');
 });
 
@@ -266,7 +266,7 @@ test('valve set control sends the operation without duration', async () => {
     const creds = createCredentials(runtime);
     const calls = [];
     creds.client.sendValveSetControlAsync = async (...args) => { calls.push(args); return { status: 202, data: {} }; };
-    const node = runtime.create('valveset_control', { id: 'v1', api: 'c1', service: 'set-1', operation: 'STOP_UNTIL_NEXT_TASK' });
+    const node = runtime.create('gardena-plus-valveset-control', { id: 'v1', api: 'c1', service: 'set-1', operation: 'STOP_UNTIL_NEXT_TASK' });
     const { err } = await sendInput(node, {});
     assert.equal(err, undefined);
     assert.deepEqual(calls[0], ['set-1', 'STOP_UNTIL_NEXT_TASK', undefined]);

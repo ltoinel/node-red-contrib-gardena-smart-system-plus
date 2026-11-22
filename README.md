@@ -27,7 +27,7 @@ This is a fork of [node-red-contrib-gardena-smart-system](https://www.npmjs.com/
 
 The update also fixes a security issue (access tokens and API keys were written to the Node-RED logs and exposed in `msg.payload`) and modernizes the dependencies. The full list of changes is in the [changelog](#changelog).
 
-> **Note:** this package registers the same node types as the original one. Uninstall `node-red-contrib-gardena-smart-system` before installing this package; your existing flows will keep working without changes.
+> **Note:** since version 2.0.0, the nodes have their own types (`gardena-plus-*`), so this package can be installed next to the original `node-red-contrib-gardena-smart-system`. Flows created with the original package or with version 1.x of this one must be migrated, see [Migrating from 1.x or from the original package](#migrating-from-1x-or-from-the-original-package).
 
 ```
 npm install node-red-contrib-gardena-smart-system-plus
@@ -108,7 +108,39 @@ The **Gardena Events** node outputs a message as soon as a device changes (mower
 * I wasn't able to test on many things, so basically the old saying "it works on my machine" applies. If something does not work, let me know.
 * Gardena has rate limits, see [here](https://developer.husqvarnagroup.cloud/apis/gardena-smart-system-api?tab=readme#rate-limits) - keep those in mind! Do NOT setup too frequent calls to the API. For ongoing status requests, try to stick to something below one request every 30 minutes.
 
+## Migrating from 1.x or from the original package
+
+Version 2.0.0 renamed the node types to avoid conflicts with the original package in the Node-RED palette and Flow Library:
+
+| Before | Since 2.0.0 |
+|--------|-------------|
+| `api-credentials` | `gardena-plus-credentials` |
+| `devices_status` | `gardena-plus-devices-status` |
+| `service_status` | `gardena-plus-service-status` |
+| `valve_control` | `gardena-plus-valve-control` |
+| `valveset_control` | `gardena-plus-valveset-control` |
+| `mower_control` | `gardena-plus-mower-control` |
+| `powersocket_control` | `gardena-plus-powersocket-control` |
+| `gardena_events` | `gardena-plus-events` |
+
+Node-RED does not convert node types: after the upgrade, the old nodes are shown as *unknown*. To migrate, stop Node-RED, back up your flows file (by default `~/.node-red/flows.json`), rename the types, then restart:
+
+```
+cd ~/.node-red
+cp flows.json flows.json.bak
+sed -i -E 's/"type": ?"(api-credentials)"/"type":"gardena-plus-credentials"/g; s/"type": ?"(devices_status|service_status|valve_control|valveset_control|mower_control|powersocket_control)"/"type":"gardena-plus-\1"/g; s/"type": ?"gardena_events"/"type":"gardena-plus-events"/g' flows.json
+sed -i -E 's/"type":"gardena-plus-([a-z]+)_([a-z]+)"/"type":"gardena-plus-\1-\2"/g' flows.json
+```
+
+The node IDs do not change, so the credentials (stored in `flows_cred.json`) and the wires are kept. Alternatively, export your flows, replace the types in the JSON with a text editor and import them again.
+
 ## Changelog
+
+### 2.0.0
+
+* **Breaking:** the node types are renamed with a `gardena-plus-` prefix, so that they no longer conflict with the original package. Existing flows must be migrated, see [Migrating](#migrating-from-1x-or-from-the-original-package).
+* Example flows (devices status, realtime events, control), available from *Import > Examples* in Node-RED.
+
 
 ### 1.3.0
 

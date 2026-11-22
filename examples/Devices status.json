@@ -32,7 +32,7 @@
     },
     {
         "id": "ex1-status",
-        "type": "devices_status",
+        "type": "gardena-plus-devices-status",
         "z": "ex1",
         "api": "ex-creds",
         "x": 400,
@@ -61,7 +61,7 @@
     },
     {
         "id": "ex1-service",
-        "type": "service_status",
+        "type": "gardena-plus-service-status",
         "z": "ex1",
         "name": "My mower",
         "service": "",
@@ -91,7 +91,7 @@
     },
     {
         "id": "ex-creds",
-        "type": "api-credentials",
+        "type": "gardena-plus-credentials",
         "name": "Gardena Access"
     }
 ]

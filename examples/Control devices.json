@@ -162,7 +162,7 @@
     },
     {
         "id": "ex3-valve",
-        "type": "valve_control",
+        "type": "gardena-plus-valve-control",
         "z": "ex3",
         "name": "Valve",
         "api": "ex-creds",
@@ -180,7 +180,7 @@
     },
     {
         "id": "ex3-valve-msg",
-        "type": "valve_control",
+        "type": "gardena-plus-valve-control",
         "z": "ex3",
         "name": "Valve (duration from msg)",
         "api": "ex-creds",
@@ -198,7 +198,7 @@
     },
     {
         "id": "ex3-valveset",
-        "type": "valveset_control",
+        "type": "gardena-plus-valveset-control",
         "z": "ex3",
         "name": "Irrigation control",
         "api": "ex-creds",
@@ -214,7 +214,7 @@
     },
     {
         "id": "ex3-mower",
-        "type": "mower_control",
+        "type": "gardena-plus-mower-control",
         "z": "ex3",
         "name": "Mower",
         "api": "ex-creds",
@@ -232,7 +232,7 @@
     },
     {
         "id": "ex3-park",
-        "type": "mower_control",
+        "type": "gardena-plus-mower-control",
         "z": "ex3",
         "name": "Mower",
         "api": "ex-creds",
@@ -250,7 +250,7 @@
     },
     {
         "id": "ex3-socket",
-        "type": "powersocket_control",
+        "type": "gardena-plus-powersocket-control",
         "z": "ex3",
         "name": "Power socket",
         "api": "ex-creds",
@@ -313,7 +313,7 @@
     },
     {
         "id": "ex-creds",
-        "type": "api-credentials",
+        "type": "gardena-plus-credentials",
         "name": "Gardena Access"
     }
 ]
