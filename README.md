@@ -37,7 +37,7 @@ npm install node-red-contrib-gardena-smart-system-plus
 
 This flow is intended for people who want to control their gardena smart system via Node RED.
 
-As of now, the node can handle 
+As of now, the node can handle
 
 * Valves
 * Mowers
@@ -57,7 +57,7 @@ When using one of the actions on the node, you'll need credentials. These should
 
 ### Service IDs
 
-When controlling anything, you'll need the service ID. In order to get these, use the `device_status` node which lists all devices that you can use. For each device, each service is listed include its ID.
+When controlling anything, you'll need the service ID. In order to get these, use the **Gardena Devices Status** node, which lists all the devices you can use. For each device, each service is listed including its ID.
 
 Sadly, the services aren't really labeled, so you'll need to try out which is which.
 

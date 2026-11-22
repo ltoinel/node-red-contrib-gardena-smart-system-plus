@@ -6,7 +6,7 @@
             password: { type: 'password' }
         },
         defaults: {
-        	name: { value:'Gardena Access' },
+            name: { value:'Gardena Access' },
         },
         label() {
             return this.name || 'Gardena Application Credentials'
@@ -35,7 +35,7 @@
         category: 'Gardena',
         color: '#C0DEED',
         defaults: {
-        	api: { value: '', type: 'api-credentials', required: true },
+            api: { value: '', type: 'api-credentials', required: true },
         },
         inputs:1,
         outputs:1,
@@ -48,7 +48,7 @@
 
 <script type="text/html" data-template-name="devices_status">
     <div class="form-row">
-        <label for="node-input-api"><i class="fa fa-tag"></i> Api Credentials</label>
+        <label for="node-input-api"><i class="fa fa-tag"></i> API Credentials</label>
         <input type="text" id="node-input-api">
     </div>
 </script>
@@ -68,17 +68,17 @@
         category: 'Gardena',
         color: '#C0DEED',
         defaults: {
-        	name: {value: null},
-     		service: {value: '', required: true},
-     		servicetype: {value: '', required: true},
+            name: {value: null},
+             service: {value: '', required: true},
+             servicetype: {value: '', required: true},
         },
         inputs: 1,
         outputs: 1,
         icon: "font-awesome/fa-filter",
         label: function() {
-        	if (this.name && this.servicetype) {
-        		return `${this.name} (${this.servicetype})`
-        	}
+            if (this.name && this.servicetype) {
+                return `${this.name} (${this.servicetype})`
+            }
             return 'Gardena Service Status';
         }
     });
@@ -96,11 +96,11 @@
     <div class="form-row">
         <label for="node-input-servicetype"><i class="fa fa-tag"></i> Service Type</label>
         <select id="node-input-servicetype">
-        	<option value="MOWER">Mower</option>
-        	<option value="VALVE">Valve</option>
-        	<option value="VALVE_SET">Irrigation Control Status</option>
-        	<option value="SENSOR">Sensor</option>
-        	<option value="COMMON">Device Information</option>
+            <option value="MOWER">Mower</option>
+            <option value="VALVE">Valve</option>
+            <option value="VALVE_SET">Irrigation Control Status</option>
+            <option value="SENSOR">Sensor</option>
+            <option value="COMMON">Device Information</option>
         </select>
     </div>
 </script>
@@ -119,12 +119,12 @@
         category: 'Gardena',
         color: '#FFAAAA',
         defaults: {
-        	name: { value: null },
-        	api: { value: '', type: 'api-credentials', required: true },
-        	service: { value: '', required: true },
-        	operation: { value: '', required: true },
-        	duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
-        	durationtype: { value: 'num' },
+            name: { value: null },
+            api: { value: '', type: 'api-credentials', required: true },
+            service: { value: '', required: true },
+            operation: { value: '', required: true },
+            duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
+            durationtype: { value: 'num' },
         },
         inputs: 1,
         outputs: 1,
@@ -133,10 +133,10 @@
             return this.name || 'Gardena Valve Control';
         },
         oneditprepare: function() {
-        	$("#node-input-duration").typedInput({
-			    types:["num", "msg"],
-			    typeField: "#node-input-durationtype"
-			})
+            $("#node-input-duration").typedInput({
+                types:["num", "msg"],
+                typeField: "#node-input-durationtype"
+            })
         }
     });
 </script>
@@ -147,7 +147,7 @@
         <input type="text" id="node-input-name">
     </div>
     <div class="form-row">
-        <label for="node-input-api"><i class="fa fa-tag"></i> Api Credentials</label>
+        <label for="node-input-api"><i class="fa fa-tag"></i> API Credentials</label>
         <input type="text" id="node-input-api">
     </div>
     <div class="form-row">
@@ -157,10 +157,10 @@
     <div class="form-row">
         <label for="node-input-operation"><i class="fa fa-tag"></i> Operation</label>
         <select id="node-input-operation">
-        	<option value="START_SECONDS_TO_OVERRIDE">Start watering for given duration</option>
-        	<option value="STOP_UNTIL_NEXT_TASK">Cancel watering</option>
-        	<option value="PAUSE">Pause Schedule</option>
-        	<option value="UNPAUSE">Continue Schedule</option>
+            <option value="START_SECONDS_TO_OVERRIDE">Start watering for given duration</option>
+            <option value="STOP_UNTIL_NEXT_TASK">Cancel watering</option>
+            <option value="PAUSE">Pause Schedule</option>
+            <option value="UNPAUSE">Continue Schedule</option>
         </select>
     </div>
     <div class="form-row">
@@ -190,12 +190,12 @@
         category: 'Gardena',
         color: '#FFAAAA',
         defaults: {
-        	name: { value: null },
-        	api: { value: '', type: 'api-credentials', required: true },
-        	service: { value: '', required: true },
-        	operation: { value: '', required: true },
-        	duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
-        	durationtype: { value: 'num' },
+            name: { value: null },
+            api: { value: '', type: 'api-credentials', required: true },
+            service: { value: '', required: true },
+            operation: { value: '', required: true },
+            duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
+            durationtype: { value: 'num' },
         },
         inputs: 1,
         outputs: 1,
@@ -204,10 +204,10 @@
             return this.name || 'Gardena Mower Control';
         },
         oneditprepare: function() {
-        	$("#node-input-duration").typedInput({
-			    types:["num", "msg"],
-			    typeField: "#node-input-durationtype"
-			})
+            $("#node-input-duration").typedInput({
+                types:["num", "msg"],
+                typeField: "#node-input-durationtype"
+            })
         }
     });
 </script>
@@ -218,7 +218,7 @@
         <input type="text" id="node-input-name">
     </div>
     <div class="form-row">
-        <label for="node-input-api"><i class="fa fa-tag"></i> Api Credentials</label>
+        <label for="node-input-api"><i class="fa fa-tag"></i> API Credentials</label>
         <input type="text" id="node-input-api">
     </div>
     <div class="form-row">
@@ -228,10 +228,10 @@
     <div class="form-row">
         <label for="node-input-operation"><i class="fa fa-tag"></i> Operation</label>
         <select id="node-input-operation">
-        	<option value="START_SECONDS_TO_OVERRIDE">Start mowing for given duration</option>
-        	<option value="START_DONT_OVERRIDE">Start mowing by schedule</option>
-        	<option value="PARK_UNTIL_NEXT_TASK">Park until next task</option>
-        	<option value="PARK_UNTIL_FURTHER_NOTICE">Park until further notice</option>
+            <option value="START_SECONDS_TO_OVERRIDE">Start mowing for given duration</option>
+            <option value="START_DONT_OVERRIDE">Start mowing by schedule</option>
+            <option value="PARK_UNTIL_NEXT_TASK">Park until next task</option>
+            <option value="PARK_UNTIL_FURTHER_NOTICE">Park until further notice</option>
         </select>
     </div>
     <div class="form-row">
@@ -261,12 +261,12 @@
         category: 'Gardena',
         color: '#FFAAAA',
         defaults: {
-        	name: { value: null },
-        	api: { value: '', type: 'api-credentials', required: true },
-        	service: { value: '', required: true },
-        	operation: { value: '', required: true },
-        	duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
-        	durationtype: { value: 'num' },
+            name: { value: null },
+            api: { value: '', type: 'api-credentials', required: true },
+            service: { value: '', required: true },
+            operation: { value: '', required: true },
+            duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
+            durationtype: { value: 'num' },
         },
         inputs: 1,
         outputs: 1,
@@ -275,10 +275,10 @@
             return this.name || 'Gardena Power Socket Control';
         },
         oneditprepare: function() {
-        	$("#node-input-duration").typedInput({
-			    types:["num", "msg"],
-			    typeField: "#node-input-durationtype"
-			})
+            $("#node-input-duration").typedInput({
+                types:["num", "msg"],
+                typeField: "#node-input-durationtype"
+            })
         }
     });
 </script>
@@ -289,7 +289,7 @@
         <input type="text" id="node-input-name">
     </div>
     <div class="form-row">
-        <label for="node-input-api"><i class="fa fa-tag"></i> Api Credentials</label>
+        <label for="node-input-api"><i class="fa fa-tag"></i> API Credentials</label>
         <input type="text" id="node-input-api">
     </div>
     <div class="form-row">
@@ -299,11 +299,11 @@
     <div class="form-row">
         <label for="node-input-operation"><i class="fa fa-tag"></i> Operation</label>
         <select id="node-input-operation">
-        	<option value="START_SECONDS_TO_OVERRIDE">Switch on for given duration</option>
-        	<option value="START_OVERRIDE">Switch on</option>
-        	<option value="STOP_UNTIL_NEXT_TASK">Switch off and return to schedule</option>
-        	<option value="PAUSE">Disable schedule for given duration</option>
-        	<option value="UNPAUSE">Continue with schedule</option>
+            <option value="START_SECONDS_TO_OVERRIDE">Switch on for given duration</option>
+            <option value="START_OVERRIDE">Switch on</option>
+            <option value="STOP_UNTIL_NEXT_TASK">Switch off and return to schedule</option>
+            <option value="PAUSE">Disable schedule for given duration</option>
+            <option value="UNPAUSE">Continue with schedule</option>
         </select>
     </div>
     <div class="form-row">
