@@ -35,7 +35,7 @@
         category: 'Gardena',
         color: '#C0DEED',
         defaults: {
-        	api: { value:'', type: 'api-credentials' },
+        	api: { value: '', type: 'api-credentials', required: true },
         },
         inputs:1,
         outputs:1,
@@ -54,7 +54,13 @@
 </script>
 
 <script type="text/html" data-help-name="devices_status">
-    <p>A node that retrieves status for all devices in one location from Gardena Smart System.</p>
+    <p>Retrieves the status of all devices, for every location of the Gardena Smart System account.</p>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">array</span></dt>
+        <dd>One entry per location, each containing its <code>devices</code> and their <code>services</code> (with their IDs).</dd>
+    </dl>
+    <p>Mind the Gardena API rate limits: avoid polling more often than every 30 minutes. Locations are cached for one hour.</p>
 </script>
 
 <script type="text/javascript">
@@ -100,7 +106,12 @@
 </script>
 
 <script type="text/html" data-help-name="service_status">
-    <p>A node that filters the status of a service from the data that was retrieved using the Gardena Devices Status node.</p>
+    <p>Extracts the status of one service from the output of the Gardena Devices Status node.</p>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>The matching service. An error (catchable) is raised when it is not found.</dd>
+    </dl>
 </script>
 
 <script type="text/javascript">
@@ -109,10 +120,10 @@
         color: '#FFAAAA',
         defaults: {
         	name: { value: null },
-        	api: { value: '', type: 'api-credentials' },
+        	api: { value: '', type: 'api-credentials', required: true },
         	service: { value: '', required: true },
         	operation: { value: '', required: true },
-        	duration: { value: 1 },
+        	duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
         	durationtype: { value: 'num' },
         },
         inputs: 1,
@@ -161,6 +172,17 @@
 
 <script type="text/html" data-help-name="valve_control">
     <p>A node for controlling a Gardena Valve.</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>any message</dt><dd>triggers the configured operation.</dd>
+    </dl>
+    <p>The duration (in minutes) is used by operations that need one. It can be a fixed number or read from a <code>msg</code> property.</p>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd><code>{ status, data }</code> of the Gardena API response (status <code>202</code> when the command was accepted).</dd>
+    </dl>
+    <p>Errors can be handled with a <code>catch</code> node.</p>
 </script>
 
 <script type="text/javascript">
@@ -169,10 +191,10 @@
         color: '#FFAAAA',
         defaults: {
         	name: { value: null },
-        	api: { value: '', type: 'api-credentials' },
+        	api: { value: '', type: 'api-credentials', required: true },
         	service: { value: '', required: true },
         	operation: { value: '', required: true },
-        	duration: { value: 1 },
+        	duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
         	durationtype: { value: 'num' },
         },
         inputs: 1,
@@ -221,6 +243,17 @@
 
 <script type="text/html" data-help-name="mower_control">
     <p>A node for controlling a Gardena Mower.</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>any message</dt><dd>triggers the configured operation.</dd>
+    </dl>
+    <p>The duration (in minutes) is used by operations that need one. It can be a fixed number or read from a <code>msg</code> property.</p>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd><code>{ status, data }</code> of the Gardena API response (status <code>202</code> when the command was accepted).</dd>
+    </dl>
+    <p>Errors can be handled with a <code>catch</code> node.</p>
 </script>
 
 <script type="text/javascript">
@@ -229,10 +262,10 @@
         color: '#FFAAAA',
         defaults: {
         	name: { value: null },
-        	api: { value: '', type: 'api-credentials' },
+        	api: { value: '', type: 'api-credentials', required: true },
         	service: { value: '', required: true },
         	operation: { value: '', required: true },
-        	duration: { value: 1 },
+        	duration: { value: 1, validate: RED.validators.typedInput('durationtype') },
         	durationtype: { value: 'num' },
         },
         inputs: 1,
@@ -282,4 +315,15 @@
 
 <script type="text/html" data-help-name="powersocket_control">
     <p>A node for controlling a Gardena Power Socket.</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>any message</dt><dd>triggers the configured operation.</dd>
+    </dl>
+    <p>The duration (in minutes) is used by operations that need one. It can be a fixed number or read from a <code>msg</code> property.</p>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd><code>{ status, data }</code> of the Gardena API response (status <code>202</code> when the command was accepted).</dd>
+    </dl>
+    <p>Errors can be handled with a <code>catch</code> node.</p>
 </script>
