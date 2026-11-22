@@ -220,9 +220,38 @@ test('a 404 on a location invalidates the locations cache', async () => {
     assert.equal(client.locations, null);
 });
 
-test('very small durations are sent as at least one second', async () => {
+test('durations are sent as whole minutes, as required by the API', async () => {
     const http = fakeHttp({ requestHandler: () => ({ status: 202, data: {} }) });
     const client = new GardenaApiClient(CREDENTIALS, http);
     await client.sendValveControlAsync('svc', 'START_SECONDS_TO_OVERRIDE', 0.001);
-    assert.equal(http.calls.request[0].data.data.attributes.seconds, 1);
+    await client.sendValveControlAsync('svc', 'START_SECONDS_TO_OVERRIDE', '2.6');
+    assert.equal(http.calls.request[0].data.data.attributes.seconds, 60);
+    assert.equal(http.calls.request[1].data.data.attributes.seconds, 180);
+});
+
+test('valve set control sends the command without duration', async () => {
+    const http = fakeHttp({ requestHandler: () => ({ status: 202, data: {} }) });
+    const client = new GardenaApiClient(CREDENTIALS, http);
+    await client.sendValveSetControlAsync('set-1', 'STOP_UNTIL_NEXT_TASK');
+    assert.deepEqual(http.calls.request[0].data.data.type, 'VALVE_SET_CONTROL');
+    assert.deepEqual(http.calls.request[0].data.data.attributes, { command: 'STOP_UNTIL_NEXT_TASK' });
+});
+
+test('creates a WebSocket URL for a location', async () => {
+    const http = fakeHttp({
+        requestHandler: () => ({ status: 201, data: { data: { id: 'ws', type: 'WEBSOCKET', attributes: { url: 'wss://example/ws', validity: 30 } } } }),
+    });
+    const client = new GardenaApiClient(CREDENTIALS, http);
+    assert.equal(await client.createWebSocketUrlAsync('loc-1'), 'wss://example/ws');
+    const req = http.calls.request[0];
+    assert.equal(req.method, 'post');
+    assert.equal(req.url, 'https://api.smart.gardena.dev/v2/websocket');
+    assert.deepEqual(req.data.data.attributes, { locationId: 'loc-1' });
+    assert.equal(req.data.data.type, 'WEBSOCKET');
+});
+
+test('rejects a WebSocket creation response without URL', async () => {
+    const http = fakeHttp({ requestHandler: () => ({ status: 201, data: { data: {} } }) });
+    const client = new GardenaApiClient(CREDENTIALS, http);
+    await assert.rejects(client.createWebSocketUrlAsync('loc-1'), /did not contain a URL/);
 });

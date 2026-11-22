@@ -68,9 +68,9 @@
         category: 'Gardena',
         color: '#C0DEED',
         defaults: {
-            name: {value: null},
-             service: {value: '', required: true},
-             servicetype: {value: '', required: true},
+            name: { value: null },
+            service: { value: '', required: true },
+            servicetype: { value: '', required: true },
         },
         inputs: 1,
         outputs: 1,
@@ -99,6 +99,7 @@
             <option value="MOWER">Mower</option>
             <option value="VALVE">Valve</option>
             <option value="VALVE_SET">Irrigation Control Status</option>
+            <option value="POWER_SOCKET">Power Socket</option>
             <option value="SENSOR">Sensor</option>
             <option value="COMMON">Device Information</option>
         </select>
@@ -326,4 +327,140 @@
         <dd><code>{ status, data }</code> of the Gardena API response (status <code>202</code> when the command was accepted).</dd>
     </dl>
     <p>Errors can be handled with a <code>catch</code> node.</p>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('valveset_control', {
+        category: 'Gardena',
+        color: '#FFAAAA',
+        defaults: {
+            name: { value: null },
+            api: { value: '', type: 'api-credentials', required: true },
+            service: { value: '', required: true },
+            operation: { value: 'STOP_UNTIL_NEXT_TASK', required: true },
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-stop-circle",
+        label: function() {
+            return this.name || 'Gardena Valve Set Control';
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="valveset_control">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Node Name</label>
+        <input type="text" id="node-input-name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-api"><i class="fa fa-tag"></i> API Credentials</label>
+        <input type="text" id="node-input-api">
+    </div>
+    <div class="form-row">
+        <label for="node-input-service"><i class="fa fa-tag"></i> Service ID</label>
+        <input type="text" id="node-input-service" placeholder="ID of the VALVE_SET service">
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-tag"></i> Operation</label>
+        <select id="node-input-operation">
+            <option value="STOP_UNTIL_NEXT_TASK">Close all valves</option>
+        </select>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="valveset_control">
+    <p>Immediately closes all the valves of a Gardena irrigation control, then continues with the schedule.</p>
+    <p>Use the ID of the <code>VALVE_SET</code> service, listed by the Gardena Devices Status node.</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>any message</dt><dd>triggers the operation.</dd>
+    </dl>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd><code>{ status, data }</code> of the Gardena API response (status <code>202</code> when the command was accepted).</dd>
+    </dl>
+    <p>Errors can be handled with a <code>catch</code> node.</p>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('gardena_events', {
+        category: 'Gardena',
+        color: '#C0DEED',
+        defaults: {
+            name: { value: null },
+            api: { value: '', type: 'api-credentials', required: true },
+            location: { value: '' },
+            eventtype: { value: '' },
+            filterid: { value: '' },
+        },
+        inputs: 0,
+        outputs: 1,
+        icon: "font-awesome/fa-bolt",
+        label: function() {
+            return this.name || (this.eventtype ? `Gardena Events (${this.eventtype})` : 'Gardena Events');
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="gardena_events">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Node Name</label>
+        <input type="text" id="node-input-name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-api"><i class="fa fa-tag"></i> API Credentials</label>
+        <input type="text" id="node-input-api">
+    </div>
+    <div class="form-row">
+        <label for="node-input-eventtype"><i class="fa fa-filter"></i> Event Type</label>
+        <select id="node-input-eventtype">
+            <option value="">All</option>
+            <option value="MOWER">Mower</option>
+            <option value="VALVE">Valve</option>
+            <option value="VALVE_SET">Irrigation Control</option>
+            <option value="POWER_SOCKET">Power Socket</option>
+            <option value="SENSOR">Sensor</option>
+            <option value="COMMON">Device Information</option>
+            <option value="DEVICE">Device</option>
+            <option value="LOCATION">Location</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-filterid"><i class="fa fa-filter"></i> Service / Device ID</label>
+        <input type="text" id="node-input-filterid" placeholder="Optional: only this service or device">
+    </div>
+    <div class="form-row">
+        <label for="node-input-location"><i class="fa fa-home"></i> Location ID</label>
+        <input type="text" id="node-input-location" placeholder="Optional: all locations by default">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="gardena_events">
+    <p>Outputs the state changes of the Gardena devices in realtime, as soon as they happen (mower activity,
+    valve opened or closed, sensor values, battery, radio link...).</p>
+    <p>Prefer this node to polling the Gardena Devices Status node: the events are pushed by the Gardena API
+    through a WebSocket, which uses almost none of the API quota. Right after connecting, the current state
+    of every device and service is sent.</p>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>The complete state of the service, device or location that changed, with the same shape as in the
+        Devices Status output (<code>id</code>, <code>type</code> and its attributes, e.g. <code>activity.value</code>).
+        The API sends partial updates: they are merged into the state received since the connection opened.</dd>
+        <dt>changed <span class="property-type">array</span></dt>
+        <dd>Names of the attributes present in this update, e.g. <code>["activity"]</code>.</dd>
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd><code>gardena/&lt;type&gt;/&lt;id&gt;</code></dd>
+        <dt>eventType <span class="property-type">string</span></dt>
+        <dd>The resource type: <code>MOWER</code>, <code>VALVE</code>, <code>SENSOR</code>, <code>DEVICE</code>...</dd>
+        <dt>deviceId <span class="property-type">string</span></dt>
+        <dd>The ID of the device the resource belongs to, when known.</dd>
+    </dl>
+    <h3>Details</h3>
+    <p>All the Events nodes using the same credentials share one connection per location. When the connection
+    is lost, it is re-established automatically: quickly at first, then once per hour, to stay within the
+    Gardena API quota. The connection is kept alive with a ping every 150 seconds and renewed every 110 minutes,
+    before the API closes it (2 hours maximum).</p>
 </script>

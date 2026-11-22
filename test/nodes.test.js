@@ -19,6 +19,12 @@ function createFakeRED() {
                 node.statuses = [];
                 node.status = (s) => node.statuses.push(s);
                 node.debug = () => {};
+                node.sentMessages = [];
+                node.send = (m) => node.sentMessages.push(m);
+                node.warnings = [];
+                node.warn = (w) => node.warnings.push(w);
+                node.errors = [];
+                node.error = (e) => node.errors.push(e);
                 instances[config.id] = node;
             },
             getNode(id) { return instances[id]; },
@@ -164,4 +170,104 @@ test('invalid msg duration expression is reported without calling the API', asyn
     assert.equal(sent.length, 0);
     assert.match(err.message, /zero-length/);
     assert.equal(node.statuses.at(-1).text, 'Invalid duration');
+});
+
+const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+function createCredentials(runtime) {
+    const creds = runtime.create('api-credentials', { id: 'c1', credentials: { application: 'a', password: 'p' } });
+    creds.client.getLoginStatusAsync = async () => true;
+    creds.client.getLocationsAsync = async () => ({ 'loc-1': 'Home' });
+    // Keep the streams in "connecting" state: no network in unit tests.
+    creds.client.createWebSocketUrlAsync = () => new Promise(() => {});
+    return creds;
+}
+
+test('events nodes share one stream per location and filter events', async () => {
+    const runtime = createFakeRED();
+    const creds = createCredentials(runtime);
+    const all = runtime.create('gardena_events', { id: 'e1', api: 'c1', eventtype: '', filterid: '' });
+    const mowers = runtime.create('gardena_events', { id: 'e2', api: 'c1', eventtype: 'MOWER', filterid: '' });
+    const oneDevice = runtime.create('gardena_events', { id: 'e3', api: 'c1', eventtype: '', filterid: 'dev-1' });
+    await flush();
+
+    const stream = creds.acquireEventStream('loc-1');
+    creds.releaseEventStream('loc-1');
+    assert.equal(stream.listenerCount('event'), 3, 'one shared stream for the three nodes');
+
+    stream.emit('event', {
+        id: 'dev-1:1', type: 'MOWER',
+        attributes: { activity: { value: 'OK_CUTTING' } },
+        relationships: { device: { data: { id: 'dev-1', type: 'DEVICE' } } },
+    }, ['activity']);
+    stream.emit('event', { id: 'svc-2', type: 'SENSOR', attributes: { soilHumidity: { value: 40 } } });
+
+    assert.equal(all.sentMessages.length, 2);
+    assert.equal(mowers.sentMessages.length, 1);
+    assert.equal(oneDevice.sentMessages.length, 1);
+    assert.deepEqual(mowers.sentMessages[0], {
+        topic: 'gardena/MOWER/dev-1:1',
+        eventType: 'MOWER',
+        deviceId: 'dev-1',
+        changed: ['activity'],
+        payload: { id: 'dev-1:1', type: 'MOWER', activity: { value: 'OK_CUTTING' } },
+    });
+
+    stream.emit('state', 'waiting', { error: new Error('lost'), delayMs: 30000 });
+    assert.equal(all.statuses.at(-1).text, 'Disconnected, retry in 30s');
+    assert.match(all.warnings[0], /lost/);
+    stream.emit('state', 'connected', {});
+    assert.equal(all.statuses.at(-1).text, 'Listening');
+
+    for (const node of [all, mowers, oneDevice]) node.emit('close');
+    assert.equal(stream.state, 'stopped', 'stream stopped when its last node closes');
+    assert.equal(stream.listenerCount('event'), 0);
+});
+
+test('events node uses the configured location and reports location errors', async () => {
+    const runtime = createFakeRED();
+    const creds = createCredentials(runtime);
+    const acquired = [];
+    const original = creds.acquireEventStream;
+    creds.acquireEventStream = (id) => { acquired.push(id); return original(id); };
+
+    const node = runtime.create('gardena_events', { id: 'e4', api: 'c1', location: 'loc-9' });
+    await flush();
+    assert.deepEqual(acquired, ['loc-9']);
+    node.emit('close');
+
+    creds.client.getLocationsAsync = async () => { throw new Error('quota'); };
+    const failing = runtime.create('gardena_events', { id: 'e5', api: 'c1' });
+    await flush();
+    assert.equal(failing.statuses.at(-1).text, 'Error getting locations');
+    assert.match(failing.errors[0], /quota/);
+});
+
+test('events node closed before locations are known does not subscribe', async () => {
+    const runtime = createFakeRED();
+    const creds = createCredentials(runtime);
+    const node = runtime.create('gardena_events', { id: 'e6', api: 'c1' });
+    node.emit('close');
+    await flush();
+    const stream = creds.acquireEventStream('loc-1');
+    assert.equal(stream.listenerCount('event'), 0);
+    creds.emit('close');
+    assert.equal(stream.state, 'stopped');
+});
+
+test('events node without credentials shows it', () => {
+    const runtime = createFakeRED();
+    const node = runtime.create('gardena_events', { id: 'e7', api: 'none' });
+    assert.equal(node.statuses.at(-1).text, 'Credentials missing');
+});
+
+test('valve set control sends the operation without duration', async () => {
+    const runtime = createFakeRED();
+    const creds = createCredentials(runtime);
+    const calls = [];
+    creds.client.sendValveSetControlAsync = async (...args) => { calls.push(args); return { status: 202, data: {} }; };
+    const node = runtime.create('valveset_control', { id: 'v1', api: 'c1', service: 'set-1', operation: 'STOP_UNTIL_NEXT_TASK' });
+    const { err } = await sendInput(node, {});
+    assert.equal(err, undefined);
+    assert.deepEqual(calls[0], ['set-1', 'STOP_UNTIL_NEXT_TASK', undefined]);
 });

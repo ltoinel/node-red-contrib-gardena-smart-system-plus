@@ -12,6 +12,7 @@ const COMMAND_TYPES = {
     valve: 'VALVE_CONTROL',
     mower: 'MOWER_CONTROL',
     powerSocket: 'POWER_SOCKET_CONTROL',
+    valveSet: 'VALVE_SET_CONTROL',
 };
 /** The only operation for which the Gardena API requires a duration. */
 const TIMED_OPERATION = 'START_SECONDS_TO_OVERRIDE';
@@ -196,6 +197,29 @@ class GardenaApiClient {
         }
     }
 
+    // Realtime events
+
+    /**
+     * Creates a WebSocket endpoint for the realtime events of a location. The returned URL must
+     * be connected to quickly: it is only valid for a short time.
+     * @returns {Promise<string>} The wss:// URL
+     */
+    async createWebSocketUrlAsync(locationId) {
+        const response = await this.sendAuthenticatedRequestAsync('post', 'websocket', {
+            data: {
+                id: `request-${Date.now()}`,
+                type: 'WEBSOCKET',
+                attributes: { locationId },
+            },
+        });
+        const resource = response.data && response.data.data;
+        const url = resource && resource.attributes && resource.attributes.url;
+        if (!url) {
+            throw new GardenaApiError('WebSocket creation response did not contain a URL.', response.status, response.data);
+        }
+        return url;
+    }
+
     // Commands
 
     async sendValveControlAsync(serviceId, operation, durationMinutes) {
@@ -208,6 +232,11 @@ class GardenaApiClient {
 
     async sendPowerSocketControlAsync(serviceId, operation, durationMinutes) {
         return this.sendServiceControlAsync(serviceId, operation, durationMinutes, COMMAND_TYPES.powerSocket);
+    }
+
+    /** Closes all the valves of an irrigation control (the only operation of a valve set). */
+    async sendValveSetControlAsync(serviceId, operation) {
+        return this.sendServiceControlAsync(serviceId, operation, undefined, COMMAND_TYPES.valveSet);
     }
 
     /**
@@ -232,7 +261,8 @@ class GardenaApiClient {
             throw new GardenaApiError(`A positive duration in minutes is required for ${operation}, got "${durationMinutes}".`);
         }
         if (minutes > 0) {
-            attributes.seconds = Math.max(1, Math.round(minutes * 60));
+            // The API only accepts whole minutes, expressed in seconds.
+            attributes.seconds = Math.max(1, Math.round(minutes)) * 60;
         }
 
         const response = await this.sendAuthenticatedRequestAsync('put', `command/${encodeURIComponent(serviceId)}`, {

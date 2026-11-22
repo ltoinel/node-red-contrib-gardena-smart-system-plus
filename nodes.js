@@ -1,6 +1,7 @@
 'use strict';
 
-const { GardenaApiClient } = require('./client/GardenaApiClient.js');
+const { GardenaApiClient, JSONApiResponseDeserializer } = require('./client/GardenaApiClient.js');
+const { GardenaEventStream } = require('./client/GardenaEventStream.js');
 
 /** Duration used when the msg property is empty, as in the original package. */
 const DEFAULT_DURATION_MINUTES = 1;
@@ -13,14 +14,44 @@ const STATUS_STYLES = {
 
 module.exports = function(RED) {
 
-    // Config node: one API client (and therefore one token and locations cache) per credentials.
-
+    /*
+     * Config node: one API client (and therefore one token and locations cache) per credentials,
+     * and one event stream per location, shared by all the Events nodes to save API quota.
+     */
     function ApiCredentialsNode(config) {
         RED.nodes.createNode(this, config);
-        const credentials = this.credentials || {};
-        this.client = (credentials.application && credentials.password)
+        const node = this;
+        const credentials = node.credentials || {};
+        node.client = (credentials.application && credentials.password)
             ? new GardenaApiClient(credentials)
             : null;
+
+        const streams = new Map(); // locationId -> { stream, users }
+
+        /** @returns {GardenaEventStream} The started stream of the location; call releaseEventStream() when done. */
+        node.acquireEventStream = function(locationId) {
+            let entry = streams.get(locationId);
+            if (!entry) {
+                entry = { stream: new GardenaEventStream(node.client, locationId), users: 0 };
+                streams.set(locationId, entry);
+                entry.stream.start();
+            }
+            entry.users += 1;
+            return entry.stream;
+        };
+
+        node.releaseEventStream = function(locationId) {
+            const entry = streams.get(locationId);
+            if (entry && --entry.users === 0) {
+                entry.stream.stop();
+                streams.delete(locationId);
+            }
+        };
+
+        node.on('close', function() {
+            streams.forEach((entry) => entry.stream.stop());
+            streams.clear();
+        });
     }
     RED.nodes.registerType('api-credentials', ApiCredentialsNode, {
         credentials: {
@@ -31,9 +62,15 @@ module.exports = function(RED) {
 
     // Helpers
 
-    function getClient(config) {
+    /** @returns {object|null} The credentials config node, if it holds valid credentials. */
+    function getCredentialsNode(config) {
         const credentialsNode = RED.nodes.getNode(config.api);
-        return credentialsNode && credentialsNode.client ? credentialsNode.client : null;
+        return credentialsNode && credentialsNode.client ? credentialsNode : null;
+    }
+
+    function getClient(config) {
+        const credentialsNode = getCredentialsNode(config);
+        return credentialsNode ? credentialsNode.client : null;
     }
 
     function setStatus(node, kind, text) {
@@ -204,6 +241,110 @@ module.exports = function(RED) {
     }
 
     registerControlNode('valve_control', 'sendValveControlAsync', 'valve');
+    registerControlNode('valveset_control', 'sendValveSetControlAsync', 'valve set');
     registerControlNode('mower_control', 'sendMowerControlAsync', 'mower');
     registerControlNode('powersocket_control', 'sendPowerSocketControlAsync', 'power socket');
+
+    // Events: outputs realtime state changes received through the Gardena WebSocket.
+
+    const deserializer = new JSONApiResponseDeserializer();
+
+    function getDeviceId(resource) {
+        if (resource.type === 'DEVICE') {
+            return resource.id;
+        }
+        const device = resource.relationships && resource.relationships.device;
+        return device && device.data ? device.data.id : undefined;
+    }
+
+    function eventToMessage(resource, changes) {
+        return {
+            topic: `gardena/${resource.type}/${resource.id}`,
+            eventType: resource.type,
+            deviceId: getDeviceId(resource),
+            // Names of the attributes present in this update (the API sends partial updates).
+            changed: changes || [],
+            // Complete merged state, same shape as the services output by the Devices Status node.
+            payload: deserializer.resolveResource(resource, [], []),
+        };
+    }
+
+    function matchesFilter(config, resource) {
+        if (config.eventtype && resource.type !== config.eventtype) {
+            return false;
+        }
+        return !config.filterid || resource.id === config.filterid || getDeviceId(resource) === config.filterid;
+    }
+
+    function showStreamState(node, state, details) {
+        if (state === 'connected') {
+            setStatus(node, 'ok', 'Listening');
+        } else if (state === 'connecting') {
+            setStatus(node, 'warning', 'Connecting');
+        } else if (state === 'waiting') {
+            setStatus(node, 'error', `Disconnected, retry in ${Math.round(details.delayMs / 1000)}s`);
+            if (details.error) {
+                node.warn(`Gardena realtime connection lost: ${details.error.message}`);
+            }
+        }
+    }
+
+    function GardenaEventsNode(config) {
+        RED.nodes.createNode(this, config);
+        const node = this;
+        const credentialsNode = getCredentialsNode(config);
+        const subscriptions = [];
+        let closed = false;
+
+        if (!credentialsNode) {
+            setStatus(node, 'error', 'Credentials missing');
+            return;
+        }
+
+        function subscribe(locationId) {
+            const stream = credentialsNode.acquireEventStream(locationId);
+            const onEvent = function(resource, changes) {
+                if (matchesFilter(config, resource)) {
+                    node.send(eventToMessage(resource, changes));
+                }
+            };
+            const onState = function(state, details) {
+                showStreamState(node, state, details);
+            };
+            stream.on('event', onEvent);
+            stream.on('state', onState);
+            subscriptions.push({ locationId, stream, onEvent, onState });
+            if (stream.state !== 'stopped') {
+                showStreamState(node, stream.state, {});
+            }
+        }
+
+        const locationIds = config.location
+            ? Promise.resolve([config.location])
+            : credentialsNode.client.getLocationsAsync().then(Object.keys);
+
+        setStatus(node, 'warning', 'Connecting');
+        locationIds.then(
+            function(ids) {
+                if (!closed) {
+                    ids.forEach(subscribe);
+                }
+            },
+            function(error) {
+                setStatus(node, 'error', 'Error getting locations');
+                node.error(`Cannot start Gardena realtime events: ${error.message}`);
+            }
+        );
+
+        node.on('close', function() {
+            closed = true;
+            for (const { locationId, stream, onEvent, onState } of subscriptions) {
+                stream.off('event', onEvent);
+                stream.off('state', onState);
+                credentialsNode.releaseEventStream(locationId);
+            }
+            subscriptions.length = 0;
+        });
+    }
+    RED.nodes.registerType('gardena_events', GardenaEventsNode);
 };
